@@ -1,0 +1,29 @@
+# Build system .gitignore
+
+# Local configuration overrides
+config/build-config.local.ps1
+
+# Build logs
+logs/
+*.log
+
+# Temporary build files
+temp/
+tmp/
+
+# Build packages
+packages/
+*.zip
+*.7z
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
