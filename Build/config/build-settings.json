@@ -1,0 +1,419 @@
+{
+  "Logging": {
+    "EnableFileLogging": true,
+    "Directory": "Build/logs"
+  },
+  "Build": {
+    "MaxParallelJobs": 0
+  },
+  "Toolchain": {
+    "LazBuildPath": "C:\\lazarus\\lazbuild.exe",
+    "MSBuildPath": "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe",
+    "EnableAutoRetargetSolution": true
+  },
+  "LazarusProjects": [
+    {
+      "Name": "Cheat Engine UI",
+      "ProjectPath": "Cheat Engine/cheatengine.lpi",
+      "DefaultTargets": [
+        "Release 32-Bit",
+        "Release 64-Bit",
+        "Release 64-Bit O4 AVX2"
+      ],
+      "Targets": [
+        {
+          "Name": "Release 32-Bit",
+          "BuildMode": "Release 32-Bit"
+        },
+        {
+          "Name": "Release 64-Bit",
+          "BuildMode": "Release 64-Bit"
+        },
+        {
+          "Name": "Release 64-Bit O4 AVX2",
+          "BuildMode": "Release 64-Bit O4 AVX2"
+        },
+        {
+          "Name": "Release mac",
+          "BuildMode": "Release mac"
+        },
+        {
+          "Name": "release",
+          "BuildMode": "release"
+        },
+        {
+          "Name": "debug",
+          "BuildMode": "debug"
+        },
+        {
+          "Name": "Debug Optimized 64-Bit",
+          "BuildMode": "Debug Optimized 64-Bit"
+        },
+        {
+          "Name": "debug-nomt",
+          "BuildMode": "debug-nomt"
+        },
+        {
+          "Name": "debug-nomt mac",
+          "BuildMode": "debug-nomt mac"
+        },
+        {
+          "Name": "debug-nomt 32-bit",
+          "BuildMode": "debug-nomt 32-bit"
+        },
+        {
+          "Name": "debug-nomt 64-bit",
+          "BuildMode": "debug-nomt 64-bit"
+        }
+      ]
+    },
+    {
+      "Name": "Speedhack",
+      "ProjectPath": "Cheat Engine/speedhack/speedhack.lpi",
+      "DefaultTargets": [
+        "32-bit",
+        "64-bit"
+      ],
+      "Targets": [
+        {
+          "Name": "32-bit",
+          "BuildMode": "32-bit"
+        },
+        {
+          "Name": "64-bit",
+          "BuildMode": "64-bit"
+        }
+      ]
+    },
+    {
+      "Name": "Lua Client",
+      "ProjectPath": "Cheat Engine/luaclient/luaclient.lpi",
+      "DefaultTargets": [
+        "Release 32",
+        "Release 64"
+      ],
+      "Targets": [
+        {
+          "Name": "Release 32",
+          "BuildMode": "Release 32"
+        },
+        {
+          "Name": "Debug",
+          "BuildMode": "Debug"
+        },
+        {
+          "Name": "Release 64",
+          "BuildMode": "Release 64"
+        }
+      ]
+    },
+    {
+      "Name": "VEH Debug",
+      "ProjectPath": "Cheat Engine/vehdebug/vehdebug.lpi",
+      "DefaultTargets": [
+        "release",
+        "release 64",
+        "release 32"
+      ],
+      "Targets": [
+        {
+          "Name": "release",
+          "BuildMode": "release"
+        },
+        {
+          "Name": "debug",
+          "BuildMode": "debug"
+        },
+        {
+          "Name": "release 64",
+          "BuildMode": "release 64"
+        },
+        {
+          "Name": "release 32",
+          "BuildMode": "release 32"
+        }
+      ]
+    }
+  ],
+  "Solutions": [
+    {
+      "Name": "DirectX Mess",
+      "SolutionPath": "Cheat Engine/Direct x mess/Direct x mess.sln",
+      "DefaultTargets": [
+        "Release|Win32",
+        "Release|x64"
+      ],
+      "Configurations": [
+        {
+          "Target": "Debug|Win32",
+          "Configuration": "Debug",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Debug|x64",
+          "Configuration": "Debug",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Release|Win32",
+          "Configuration": "Release",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Release|x64",
+          "Configuration": "Release",
+          "Platform": "x64"
+        }
+      ]
+    },
+    {
+      "Name": "DotNet Compiler",
+      "SolutionPath": "Cheat Engine/DotNetCompiler/CSCompiler/CSCompiler.sln",
+      "DefaultTargets": [
+        "Release|Any CPU"
+      ],
+      "Configurations": [
+        {
+          "Target": "Debug|Any CPU",
+          "Configuration": "Debug",
+          "Platform": "Any CPU"
+        },
+        {
+          "Target": "Release|Any CPU",
+          "Configuration": "Release",
+          "Platform": "Any CPU"
+        }
+      ]
+    },
+    {
+      "Name": "Mono Data Collector",
+      "SolutionPath": "Cheat Engine/MonoDataCollector/MonoDataCollector.sln",
+      "DefaultTargets": [
+        "Release|Win32",
+        "Release|x64"
+      ],
+      "Configurations": [
+        {
+          "Target": "Debug|Win32",
+          "Configuration": "Debug",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Debug|x64",
+          "Configuration": "Debug",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Release|Win32",
+          "Configuration": "Release",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Release|x64",
+          "Configuration": "Release",
+          "Platform": "x64"
+        }
+      ]
+    },
+    {
+      "Name": "DotNet Data Collector",
+      "SolutionPath": "Cheat Engine/DotNetDataCollector/DotNetDataCollector.sln",
+      "DefaultTargets": [
+        "Release|Win32",
+        "Release|x64"
+      ],
+      "Configurations": [
+        {
+          "Target": "Debug|Win32",
+          "Configuration": "Debug",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Debug|x64",
+          "Configuration": "Debug",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Release|Win32",
+          "Configuration": "Release",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Release|x64",
+          "Configuration": "Release",
+          "Platform": "x64"
+        }
+      ]
+    },
+    {
+      "Name": "DotNet Invasive Data Collector",
+      "SolutionPath": "Cheat Engine/DotNetInvasiveDataCollector/DotNetInvasiveDataCollector.sln",
+      "DefaultTargets": [
+        "Release|Any CPU"
+      ],
+      "Configurations": [
+        {
+          "Target": "Debug|Any CPU",
+          "Configuration": "Debug",
+          "Platform": "Any CPU"
+        },
+        {
+          "Target": "Release|Any CPU",
+          "Configuration": "Release",
+          "Platform": "Any CPU"
+        }
+      ]
+    },
+    {
+      "Name": "CE JVMTI",
+      "SolutionPath": "Cheat Engine/Java/CEJVMTI/CEJVMTI.sln",
+      "DefaultTargets": [
+        "Release|x86",
+        "Release|x64"
+      ],
+      "Configurations": [
+        {
+          "Target": "Debug|x64",
+          "Configuration": "Debug",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Debug|x86",
+          "Configuration": "Debug",
+          "Platform": "x86"
+        },
+        {
+          "Target": "Release|x64",
+          "Configuration": "Release",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Release|x86",
+          "Configuration": "Release",
+          "Platform": "x86"
+        }
+      ]
+    },
+    {
+      "Name": "TCC Lib",
+      "SolutionPath": "Cheat Engine/tcclib/win32/tcc/tcc.sln",
+      "DefaultTargets": [
+        "Output to 32 (Release)|x64",
+        "Output to 64 (Release)|Win32",
+        "Output to 64 (Release)|x64"
+      ],
+      "Configurations": [
+        {
+          "Target": "Output to 32 (Debug)|Win32",
+          "Configuration": "Output to 32 (Debug)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 32 (Debug)|x64",
+          "Configuration": "Output to 32 (Debug)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to 32 (Release)|Win32",
+          "Configuration": "Output to 32 (Release)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 32 (Release)|x64",
+          "Configuration": "Output to 32 (Release)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to 32 Linux ABI (Debug)|Win32",
+          "Configuration": "Output to 32 Linux ABI (Debug)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 32 Linux ABI (Debug)|x64",
+          "Configuration": "Output to 32 Linux ABI (Debug)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to 32 Linux ABI (Release)|Win32",
+          "Configuration": "Output to 32 Linux ABI (Release)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 32 Linux ABI (Release)|x64",
+          "Configuration": "Output to 32 Linux ABI (Release)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to 64 (Debug)|Win32",
+          "Configuration": "Output to 64 (Debug)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 64 (Debug)|x64",
+          "Configuration": "Output to 64 (Debug)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to 64 (Release)|Win32",
+          "Configuration": "Output to 64 (Release)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 64 (Release)|x64",
+          "Configuration": "Output to 64 (Release)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to 64 Linux ABI (Debug)|Win32",
+          "Configuration": "Output to 64 Linux ABI (Debug)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 64 Linux ABI (Debug)|x64",
+          "Configuration": "Output to 64 Linux ABI (Debug)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to 64 Linux ABI (Release)|Win32",
+          "Configuration": "Output to 64 Linux ABI (Release)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to 64 Linux ABI (Release)|x64",
+          "Configuration": "Output to 64 Linux ABI (Release)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to AArch64 Linux ABI (Debug)|Win32",
+          "Configuration": "Output to AArch64 Linux ABI (Debug)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to AArch64 Linux ABI (Debug)|x64",
+          "Configuration": "Output to AArch64 Linux ABI (Debug)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to AARCH64 Linux ABI (Release)|Win32",
+          "Configuration": "Output to AARCH64 Linux ABI (Release)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to AARCH64 Linux ABI (Release)|x64",
+          "Configuration": "Output to AARCH64 Linux ABI (Release)",
+          "Platform": "x64"
+        },
+        {
+          "Target": "Output to tcc.exe test 64 (Debug)|Win32",
+          "Configuration": "Output to tcc.exe test 64 (Debug)",
+          "Platform": "Win32"
+        },
+        {
+          "Target": "Output to tcc.exe test 64 (Debug)|x64",
+          "Configuration": "Output to tcc.exe test 64 (Debug)",
+          "Platform": "x64"
+        }
+      ]
+    }
+  ]
+}

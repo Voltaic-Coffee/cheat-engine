@@ -1,0 +1,6 @@
+{
+  "MaxFileSizeMB": 5,
+  "MaxRetainedFiles": 3,
+  "MinFreeDiskSpaceMB": 100,
+  "EnableRotation": true
+}
