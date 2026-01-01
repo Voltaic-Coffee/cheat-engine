@@ -14,7 +14,8 @@ uses
   newPageControl, newtabcontrol, newStatusBar,
   newCheckListBox, newCheckGroup, newColorBox, newDirectoryEdit, NewHintwindow,
   newToggleBox, {$ifndef bc_skipvirtualstringtree}newvirtualstringtree,{$endif}
-  Graphics, Themes, UxTheme, bettercontrolColorSet;
+  newPanel, newLabel, newSplitter,
+  Graphics, Themes, UxTheme, bettercontrolColorSet, DwmApi;
 {$else}
 uses {macport,} graphics,math, bettercontrolColorSet;
 {$endif}
@@ -56,6 +57,10 @@ type
   {$ifndef bc_skipvirtualstringtree}
   TLazVirtualStringTree=class(TNewLazVirtualStringTree);
   {$endif}
+
+  TPanel=class(TNewPanel);
+  TLabel=class(TNewLabel);
+  TSplitter=class(TNewSplitter);
 
 {$endif}
 var
@@ -106,7 +111,7 @@ var
 implementation
 
 {$ifdef windows}
-uses forms, controls, Registry, Win32Proc{$ifndef skip_mainunit2}, mainunit2{$endif};
+uses forms, controls, StdCtrls, ExtCtrls, ButtonPanel, Buttons, Registry, Win32Proc{$ifndef skip_mainunit2}, mainunit2{$endif};
 
 {$ifdef skip_mainunit2}
 const strCheatEngine='Cheat Engine';
@@ -210,9 +215,58 @@ end;
 type
   TBCFormEventHandler=class
   private
+    FThemedForms: TList;           // Track forms we've themed
+    FOriginalWndProcs: TList;      // Store original window procedures
+    FBackgroundBrush: HBRUSH;      // Cached brush for backgrounds
+
     procedure ShowHintEvent(var HintStr: string; var CanShow: Boolean; var HintInfo: THintInfo);
     procedure FormAddedEvent(Sender: TObject; Form: TCustomForm);
+    function SubclassedWndProc(hwnd: HWND; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT;
+  public
+    constructor Create;
+    destructor Destroy; override;
   end;
+
+var
+  GlobalFormEventHandler: TBCFormEventHandler;
+
+// Static callback that forwards to method
+function BCSubclassWndProc(hwnd: HWND; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
+begin
+  Result := GlobalFormEventHandler.SubclassedWndProc(hwnd, uMsg, wParam, lParam);
+end;
+
+constructor TBCFormEventHandler.Create;
+begin
+  inherited Create;
+  FThemedForms := TList.Create;
+  FOriginalWndProcs := TList.Create;
+  FBackgroundBrush := 0;
+end;
+
+destructor TBCFormEventHandler.Destroy;
+var
+  i: Integer;
+  WindowHandle: HWND;
+  OriginalWndProc: ptruint;
+begin
+  // Restore all subclassed windows
+  for i := 0 to FThemedForms.Count - 1 do
+  begin
+    WindowHandle := HWND(FThemedForms[i]);
+    OriginalWndProc := ptruint(FOriginalWndProcs[i]);
+    if IsWindow(WindowHandle) then
+      SetWindowLongPtr(WindowHandle, GWLP_WNDPROC, UINT_PTR(OriginalWndProc));
+  end;
+
+  FThemedForms.Free;
+  FOriginalWndProcs.Free;
+
+  if FBackgroundBrush <> 0 then
+    DeleteObject(FBackgroundBrush);
+
+  inherited Destroy;
+end;
 
 procedure TBCFormEventHandler.ShowHintEvent(var HintStr: string; var CanShow: Boolean; var HintInfo: THintInfo);
 begin
@@ -220,16 +274,228 @@ begin
     HintInfo.HintColor:=ColorSet.TextBackground;
 end;
 
-procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm);
+function TBCFormEventHandler.SubclassedWndProc(hwnd: HWND; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT;
+const
+  WM_CTLCOLOREDIT = $0133;
+  WM_CTLCOLORSTATIC = $0138;
+  WM_CTLCOLORLISTBOX = $0134;
+var
+  Index: Integer;
+  OriginalWndProc: ptruint;
+  DeviceContext: HDC;
 begin
-  {if ShouldAppsUseDarkMode then
+  // Find original window proc
+  Index := FThemedForms.IndexOf(Pointer(hwnd));
+  if Index < 0 then
   begin
-    form.color:=$242424;
-    if form.font.color=clDefault then
-      form.font.color:=colorset.FontColor;
-  end;  }
+    Result := DefWindowProc(hwnd, uMsg, wParam, lParam);
+    Exit;
+  end;
 
-  //todo
+  OriginalWndProc := ptruint(FOriginalWndProcs[Index]);
+
+  // Intercept color messages
+  case uMsg of
+    WM_CTLCOLOREDIT, WM_CTLCOLORSTATIC, WM_CTLCOLORLISTBOX:
+    begin
+      if ShouldAppsUseDarkMode then
+      begin
+        DeviceContext := HDC(wParam);
+
+        // Set text and background colors
+        SetTextColor(DeviceContext, ColorToRGB(ColorSet.FontColor));
+        SetBkColor(DeviceContext, ColorToRGB(ColorSet.TextBackground));
+
+        // Labels should be transparent
+        if uMsg = WM_CTLCOLORSTATIC then
+          SetBkMode(DeviceContext, TRANSPARENT);
+
+        // Create brush if needed
+        if FBackgroundBrush = 0 then
+          FBackgroundBrush := CreateSolidBrush(ColorToRGB(ColorSet.TextBackground));
+
+        Result := FBackgroundBrush;
+        Exit;
+      end;
+    end;
+  end;
+
+  // Call original window procedure
+  Result := CallWindowProc(WNDPROC(OriginalWndProc), hwnd, uMsg, wParam, lParam);
+end;
+
+procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm);
+
+  // Recursively apply dark mode colors to all controls on the form
+  procedure ApplyDarkModeToControl(AControl: TControl);
+  var
+    i: Integer;
+    shouldSetFont: Boolean;
+    ControlHandle: HWND;
+  begin
+    if AControl = nil then Exit;
+
+    // Helper to determine if we should update font color
+    // Only update if current color is default/standard light theme colors
+    shouldSetFont := (AControl.Font.Color = clDefault) or
+                     (AControl.Font.Color = graphics.clWindowText) or
+                     (AControl.Font.Color = graphics.clBlack);
+
+    // **NEW**: Apply Windows dark mode to control handle
+    if (AControl is TWinControl) and TWinControl(AControl).HandleAllocated then
+    begin
+      ControlHandle := TWinControl(AControl).Handle;
+      AllowDarkModeForWindow(ControlHandle, 1);
+
+      // Apply appropriate theme based on control type
+      if AControl is StdCtrls.TEdit then
+        SetWindowTheme(ControlHandle, 'CFD', nil)
+      else if AControl is StdCtrls.TMemo then
+        SetWindowTheme(ControlHandle, 'Explorer', nil)
+      else if AControl is StdCtrls.TButton then
+        SetWindowTheme(ControlHandle, 'Explorer', nil)
+      else if AControl is StdCtrls.TListBox then
+        SetWindowTheme(ControlHandle, 'Explorer', nil)
+      else if AControl is StdCtrls.TComboBox then
+        SetWindowTheme(ControlHandle, 'CFD', nil);
+    end;
+
+    // Apply colors based on control type
+    if AControl is StdCtrls.TButton then
+    begin
+      StdCtrls.TButton(AControl).Color := ColorSet.ButtonFaceColorDefault;
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TEdit then
+    begin
+      StdCtrls.TEdit(AControl).Color := ColorSet.EditBackground;
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TMemo then
+    begin
+      StdCtrls.TMemo(AControl).Color := ColorSet.EditBackground;
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TListBox then
+    begin
+      StdCtrls.TListBox(AControl).Color := ColorSet.EditBackground;
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TComboBox then
+    begin
+      StdCtrls.TComboBox(AControl).Color := ColorSet.EditBackground;
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TCheckBox then
+    begin
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TRadioButton then
+    begin
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TGroupBox then
+    begin
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is ExtCtrls.TPanel then
+    begin
+      // Panels with bvNone blend into form, others get slightly lighter color
+      if ExtCtrls.TPanel(AControl).BevelOuter = bvNone then
+        ExtCtrls.TPanel(AControl).Color := ColorSet.FormBackground
+      else
+        ExtCtrls.TPanel(AControl).Color := incColor(ColorSet.FormBackground, 8);
+
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is StdCtrls.TLabel then
+    begin
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is TCustomButtonPanel then
+    begin
+      // ButtonPanel contains TBitBtn controls - theme the panel background
+      TCustomButtonPanel(AControl).Color := ColorSet.FormBackground;
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is TBitBtn then
+    begin
+      // TBitBtn (used in TButtonPanel) - theme like regular buttons
+      TBitBtn(AControl).Color := ColorSet.ButtonFaceColorDefault;
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end
+    else if AControl is TGraphicControl then
+    begin
+      // Generic graphic controls (non-windowed) - just update font
+      if shouldSetFont then
+        AControl.Font.Color := ColorSet.FontColor;
+    end;
+
+    // Recursively process child controls for windowed controls
+    if AControl is TWinControl then
+    begin
+      for i := 0 to TWinControl(AControl).ControlCount - 1 do
+        ApplyDarkModeToControl(TWinControl(AControl).Controls[i]);
+    end;
+  end;
+
+var
+  ldark: DWORD;
+  dwmResult: HRESULT;
+  OriginalWndProc: ptruint;
+begin
+  // Only theme if dark mode is enabled
+  if not ShouldAppsUseDarkMode then
+    Exit;
+
+  // Ensure handle is created before calling DWM functions
+  if not Form.HandleAllocated then
+    Form.HandleNeeded;
+
+  // **NEW**: Skip TNewForm descendants (already themed)
+  if Form is TNewForm then Exit;
+
+  // Apply dark mode to form handle
+  AllowDarkModeForWindow(Form.Handle, 1);
+
+  // Dark titlebar (try both constants for compatibility)
+  if InitDwmLibrary then
+  begin
+    ldark := 1;
+    dwmResult := DwmSetWindowAttribute(Form.Handle, 20, @ldark, sizeof(ldark));
+    if dwmResult <> S_OK then
+      DwmSetWindowAttribute(Form.Handle, 19, @ldark, sizeof(ldark));
+  end;
+
+  // Set form background and font
+  Form.Color := ColorSet.FormBackground;
+  if (Form.Font.Color = clDefault) or
+     (Form.Font.Color = graphics.clWindowText) or
+     (Form.Font.Color = graphics.clBlack) then
+    Form.Font.Color := ColorSet.FontColor;
+
+  // Recursively theme all controls on the form
+  ApplyDarkModeToControl(Form);
+
+  // **NEW**: Subclass window to handle WM_CTLCOLOR* messages
+  OriginalWndProc := SetWindowLongPtr(Form.Handle, GWLP_WNDPROC, UINT_PTR(@BCSubclassWndProc));
+  FThemedForms.Add(Pointer(Form.Handle));
+  FOriginalWndProcs.Add(Pointer(OriginalWndProc));
+
+  // Force repaint
+  InvalidateRect(Form.Handle, nil, True);
 end;
 
 procedure registerDarkModeHintHandler;
@@ -240,10 +506,11 @@ begin
 end;
 
 procedure registerDarkModeFormAddHandler;
-var hh: TBCFormEventHandler;
 begin
-  hh:=TBCFormEventHandler.Create;
-  screen.AddHandlerFormAdded(hh.FormAddedEvent);
+  if GlobalFormEventHandler = nil then
+    GlobalFormEventHandler := TBCFormEventHandler.Create;
+
+  Screen.AddHandlerFormAdded(GlobalFormEventHandler.FormAddedEvent);
 end;
 
 var
@@ -318,7 +585,7 @@ initialization
       begin
         GetThemeColor(theme, 0,0,TMT_TEXTCOLOR,ColorSet.FontColor);
         GetThemeColor(theme, 0,0,TMT_FILLCOLOR,ColorSet.TextBackground);
-        colorset.InactiveFontColor:=ColorSet.FontColor xor $aaaaaa;
+        colorset.InactiveFontColor:=ColorSet.FontColor xor clInactiveFontMask;
         ColorSet.ButtonBorderColor:=deccolor(ColorSet.FontColor,10);
 
         clwindowText:=ColorSet.FontColor;
@@ -327,19 +594,62 @@ initialization
 
         if ShouldAppsUseDarkMode() then
         begin
-          ColorSet.CheckboxFillColor:=$e8e8e8;
-          ColorSet.InactiveCheckboxFillColor:=$999999;
+          ColorSet.CheckboxFillColor:=clCheckboxFillDark;
+          ColorSet.InactiveCheckboxFillColor:=clInactiveCheckboxFillDark;
+
+          // Initialize edit and form backgrounds
+          ColorSet.EditBackground:=ColorSet.TextBackground;
+          ColorSet.FormBackground:=clFormBackgroundDark;
+          ColorSet.HighlightColor:=incColor(ColorSet.TextBackground, 32);
+
+          // Dark mode color variants (from bettercontrolcolorset.pas constants)
+          ColorSet.Red:=clRedDark;
+          ColorSet.Green:=clGreenDark;
+          ColorSet.Lime:=clLimeDark;
+          ColorSet.Blue:=clBlueDark;
+          ColorSet.Yellow:=clYellowDark;
+          ColorSet.Teal:=clTealDark;
+          ColorSet.Orange:=clOrangeDark;
+          ColorSet.Purple:=clPurpleDark;
+
+          // Semantic color mappings
+          ColorSet.StatusOK:=ColorSet.Green;
+          ColorSet.StatusWarning:=ColorSet.Orange;
+          ColorSet.StatusError:=ColorSet.Red;
+          ColorSet.ValidationError:=ColorSet.Red;
+
           clBtnFace:=inccolor(ColorSet.TextBackground,8);
           clBtnText:=ColorSet.FontColor;
-
-          clBtnBorder:=$9b9b9b;
-
+          clBtnBorder:=clBtnBorderDark;
           clWindow:=colorset.TextBackground;
 
           ColorSet.CheckboxCheckMarkColor:=InvertColor(ColorSet.CheckboxFillColor);
           ColorSet.InactiveCheckboxCheckMarkColor:=InvertColor(ColorSet.CheckboxCheckMarkColor);
 
           darkmodestring:=' dark';
+        end
+        else
+        begin
+          // Light mode: use standard colors from Graphics unit
+          ColorSet.EditBackground:=ColorSet.TextBackground;
+          ColorSet.FormBackground:=clBtnFace;
+          ColorSet.HighlightColor:=clHighlight;
+
+          // Standard color variants from Graphics unit
+          ColorSet.Red:=clRed;
+          ColorSet.Green:=clGreen;
+          ColorSet.Lime:=clLime;
+          ColorSet.Blue:=clBlue;
+          ColorSet.Yellow:=clYellow;
+          ColorSet.Teal:=clTeal;
+          ColorSet.Orange:=clOrange;
+          ColorSet.Purple:=clPurple;
+
+          // Semantic color mappings
+          ColorSet.StatusOK:=ColorSet.Green;
+          ColorSet.StatusWarning:=ColorSet.Orange;
+          ColorSet.StatusError:=ColorSet.Red;
+          ColorSet.ValidationError:=ColorSet.Red;
         end;
       end;
     end;
@@ -348,6 +658,12 @@ initialization
   except
 
   end;
+  {$endif}
+
+finalization
+  {$ifdef windows}
+  if GlobalFormEventHandler <> nil then
+    GlobalFormEventHandler.Free;
   {$endif}
 end.
 

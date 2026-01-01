@@ -28,6 +28,10 @@ begin
   begin
     AllowDarkModeForWindow(handle, 1);
     SetWindowTheme(handle, 'Explorer', nil);
+
+    // Apply dark mode colors
+    //font.color := ColorSet.FontColor;  // Font color handled by theme
+    Color := ColorSet.TextBackground;
   end;
 end;
 

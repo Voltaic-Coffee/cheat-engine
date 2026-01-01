@@ -34,7 +34,7 @@ begin
     AllowDarkModeForWindow(handle,1);
 
 
-    color:=$242424;
+    color:=ColorSet.FormBackground;
     if font.color=clDefault then
       font.color:=colorset.FontColor;
 
@@ -55,7 +55,7 @@ begin
   begin
     AllowDarkModeForWindow(handle,1);
 
-    color:=$242424;
+    color:=ColorSet.FormBackground;
     font.color:=colorset.FontColor;
     if InitDwmLibrary then
     begin
