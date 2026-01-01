@@ -301,6 +301,7 @@ begin
 
   {$ifdef windows}
   registerDarkModeHintHandler;
+  registerDarkModeFormAddHandler;
   {$endif}
 
 
