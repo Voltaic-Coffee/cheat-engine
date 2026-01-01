@@ -534,6 +534,25 @@ crSizeAll     = -22
   clMedGray    = 0xA4A0A0
   ExtendedColorCount = 4
 
+  -- dark mode color variants (muted versions for visibility on dark backgrounds)
+  -- These provide readable alternatives to the standard bright colors above
+  clRedDark     = 0x4444DD   -- Muted lighter red (vs clRed=0x0000FF)
+  clGreenDark   = 0x00AA00   -- Muted darker green (vs clGreen=0x008000)
+  clLimeDark    = 0x00DD00   -- Muted lime (vs clLime=0x00FF00)
+  clBlueDark    = 0xDD4444   -- Muted lighter blue (vs clBlue=0xFF0000)
+  clYellowDark  = 0x00DDDD   -- Muted yellow (vs clYellow=0x00FFFF)
+  clTealDark    = 0xAAA000   -- Muted teal (vs clTeal=0x808000)
+  clOrangeDark  = 0x0088DD   -- Muted orange (vs clOrange=0x0080FF)
+  clPurpleDark  = 0xDD00DD   -- Muted purple (vs clPurple=0x800080)
+  clMaroonDark  = 0x0000AA   -- Muted maroon (vs clMaroon=0x000080)
+
+  -- dark mode UI element colors
+  clFormBackgroundDark       = 0x242424  -- Dark gray form background
+  clCheckboxFillDark         = 0xE8E8E8  -- Light gray checkbox fill
+  clInactiveCheckboxFillDark = 0x999999  -- Medium gray inactive checkbox
+  clBtnBorderDark            = 0x9B9B9B  -- Medium gray button border
+  clInactiveFontMask         = 0xAAAAAA  -- XOR mask for inactive font color
+
   -- special colors
   clNone    = 0x1FFFFFFF
   clDefault = 0x20000000
