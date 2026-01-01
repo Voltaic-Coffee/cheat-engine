@@ -972,7 +972,7 @@ begin
         end;
 
         if different then
-          sender.canvas.font.color:=clRed
+          sender.canvas.font.color:=ColorSet.StatusError
         else
           sender.canvas.font.color:=clWindowText;
 

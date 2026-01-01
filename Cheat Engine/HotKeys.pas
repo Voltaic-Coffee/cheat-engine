@@ -584,7 +584,7 @@ begin
   begin
     lblLimiteHotkeySupport:=tlabel.create(self);
     lblLimiteHotkeySupport.caption:='Limited hotkey support. No character keys supported';
-    lblLimiteHotkeySupport.font.color:=clRed;
+    lblLimiteHotkeySupport.font.color:=ColorSet.StatusWarning;
     lblLimiteHotkeySupport.align:=alBottom;
     lblLimiteHotkeySupport.parent:=self;
    end;

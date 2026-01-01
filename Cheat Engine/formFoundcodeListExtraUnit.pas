@@ -215,8 +215,8 @@ begin
   label3.font.assign(pnlRegisters.font);
   label10.font.assign(pnlRegisters.font);
 
-  label3.font.color:=clRed;
-  label10.font.color:=clRed;
+  label3.font.color:=ColorSet.StatusError;
+  label10.font.color:=ColorSet.StatusError;
 
   Constraints.MaxHeight:=panel5.Top+panel5.height+10;
   Constraints.MinHeight:=Constraints.MaxHeight;

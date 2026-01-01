@@ -7,7 +7,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  ExtCtrls, Sockets, resolve, CEFuncProc;
+  ExtCtrls, Sockets, resolve, CEFuncProc, betterControls;
 
 type
 
