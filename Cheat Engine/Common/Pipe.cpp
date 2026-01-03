@@ -1,4 +1,4 @@
-
+#include "stdafx.h"
 
 #ifdef _WINDOWS
 #include <Windows.h>

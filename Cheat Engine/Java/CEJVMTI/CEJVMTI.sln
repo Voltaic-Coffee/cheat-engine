@@ -1,31 +1,31 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.489
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36705.20 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CEJVMTI", "CEJVMTI\CEJVMTI.vcxproj", "{3C30A633-6797-4D59-936F-9A2A8CE79B25}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
-		Release|Win32 = Release|Win32
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Debug|Win32.ActiveCfg = Debug|Win32
-		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Debug|Win32.Build.0 = Debug|Win32
 		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Debug|x64.ActiveCfg = Debug|x64
 		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Debug|x64.Build.0 = Debug|x64
-		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Release|Win32.ActiveCfg = Release|Win32
-		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Release|Win32.Build.0 = Release|Win32
+		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Debug|x86.ActiveCfg = Debug|Win32
+		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Debug|x86.Build.0 = Debug|Win32
 		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Release|x64.ActiveCfg = Release|x64
 		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Release|x64.Build.0 = Release|x64
+		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Release|x86.ActiveCfg = Release|Win32
+		{3C30A633-6797-4D59-936F-9A2A8CE79B25}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {30EEA525-1329-4066-BA07-813250D3F2EE}
+		SolutionGuid = {3F827517-245C-4D6B-B6A9-B21E0E695552}
 	EndGlobalSection
 EndGlobal

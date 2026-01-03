@@ -11,11 +11,11 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>D:\git\cheat-engine\Cheat Engine\bin\autorun\dlls\</OutputPath>
+    <OutputPath>..\..\bin\autorun\dlls\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>D:\git\cheat-engine\Cheat Engine\bin\autorun\dlls\</OutputPath>
+    <OutputPath>..\..\bin\autorun\dlls\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
