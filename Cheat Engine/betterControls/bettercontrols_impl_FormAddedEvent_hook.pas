@@ -215,113 +215,14 @@ end;
 type
   TBCFormEventHandler=class
   private
-    FThemedForms: TList;           // Track forms we've themed
-    FOriginalWndProcs: TList;      // Store original window procedures
-    FBackgroundBrush: HBRUSH;      // Cached brush for backgrounds
-
     procedure ShowHintEvent(var HintStr: string; var CanShow: Boolean; var HintInfo: THintInfo);
     procedure FormAddedEvent(Sender: TObject; Form: TCustomForm);
-    function SubclassedWndProc(hwnd: HWND; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT;
-  public
-    constructor Create;
-    destructor Destroy; override;
   end;
-
-var
-  GlobalFormEventHandler: TBCFormEventHandler;
-
-// Static callback that forwards to method
-function BCSubclassWndProc(hwnd: HWND; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT; stdcall;
-begin
-  Result := GlobalFormEventHandler.SubclassedWndProc(hwnd, uMsg, wParam, lParam);
-end;
-
-constructor TBCFormEventHandler.Create;
-begin
-  inherited Create;
-  FThemedForms := TList.Create;
-  FOriginalWndProcs := TList.Create;
-  FBackgroundBrush := 0;
-end;
-
-destructor TBCFormEventHandler.Destroy;
-var
-  i: Integer;
-  WindowHandle: HWND;
-  OriginalWndProc: ptruint;
-begin
-  // Restore all subclassed windows
-  for i := 0 to FThemedForms.Count - 1 do
-  begin
-    WindowHandle := HWND(FThemedForms[i]);
-    OriginalWndProc := ptruint(FOriginalWndProcs[i]);
-    if IsWindow(WindowHandle) then
-      SetWindowLongPtr(WindowHandle, GWLP_WNDPROC, UINT_PTR(OriginalWndProc));
-  end;
-
-  FThemedForms.Free;
-  FOriginalWndProcs.Free;
-
-  if FBackgroundBrush <> 0 then
-    DeleteObject(FBackgroundBrush);
-
-  inherited Destroy;
-end;
 
 procedure TBCFormEventHandler.ShowHintEvent(var HintStr: string; var CanShow: Boolean; var HintInfo: THintInfo);
 begin
   if ShouldAppsUseDarkMode then
     HintInfo.HintColor:=ColorSet.TextBackground;
-end;
-
-function TBCFormEventHandler.SubclassedWndProc(hwnd: HWND; uMsg: UINT; wParam: WPARAM; lParam: LPARAM): LRESULT;
-const
-  WM_CTLCOLOREDIT = $0133;
-  WM_CTLCOLORSTATIC = $0138;
-  WM_CTLCOLORLISTBOX = $0134;
-var
-  Index: Integer;
-  OriginalWndProc: ptruint;
-  DeviceContext: HDC;
-begin
-  // Find original window proc
-  Index := FThemedForms.IndexOf(Pointer(hwnd));
-  if Index < 0 then
-  begin
-    Result := DefWindowProc(hwnd, uMsg, wParam, lParam);
-    Exit;
-  end;
-
-  OriginalWndProc := ptruint(FOriginalWndProcs[Index]);
-
-  // Intercept color messages
-  case uMsg of
-    WM_CTLCOLOREDIT, WM_CTLCOLORSTATIC, WM_CTLCOLORLISTBOX:
-    begin
-      if ShouldAppsUseDarkMode then
-      begin
-        DeviceContext := HDC(wParam);
-
-        // Set text and background colors
-        SetTextColor(DeviceContext, ColorToRGB(ColorSet.FontColor));
-        SetBkColor(DeviceContext, ColorToRGB(ColorSet.TextBackground));
-
-        // Labels should be transparent
-        if uMsg = WM_CTLCOLORSTATIC then
-          SetBkMode(DeviceContext, TRANSPARENT);
-
-        // Create brush if needed
-        if FBackgroundBrush = 0 then
-          FBackgroundBrush := CreateSolidBrush(ColorToRGB(ColorSet.TextBackground));
-
-        Result := FBackgroundBrush;
-        Exit;
-      end;
-    end;
-  end;
-
-  // Call original window procedure
-  Result := CallWindowProc(WNDPROC(OriginalWndProc), hwnd, uMsg, wParam, lParam);
 end;
 
 procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm);
@@ -331,7 +232,6 @@ procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm)
   var
     i: Integer;
     shouldSetFont: Boolean;
-    ControlHandle: HWND;
   begin
     if AControl = nil then Exit;
 
@@ -341,24 +241,9 @@ procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm)
                      (AControl.Font.Color = graphics.clWindowText) or
                      (AControl.Font.Color = graphics.clBlack);
 
-    // **NEW**: Apply Windows dark mode to control handle
-    if (AControl is TWinControl) and TWinControl(AControl).HandleAllocated then
-    begin
-      ControlHandle := TWinControl(AControl).Handle;
-      AllowDarkModeForWindow(ControlHandle, 1);
-
-      // Apply appropriate theme based on control type
-      if AControl is StdCtrls.TEdit then
-        SetWindowTheme(ControlHandle, 'CFD', nil)
-      else if AControl is StdCtrls.TMemo then
-        SetWindowTheme(ControlHandle, 'Explorer', nil)
-      else if AControl is StdCtrls.TButton then
-        SetWindowTheme(ControlHandle, 'Explorer', nil)
-      else if AControl is StdCtrls.TListBox then
-        SetWindowTheme(ControlHandle, 'Explorer', nil)
-      else if AControl is StdCtrls.TComboBox then
-        SetWindowTheme(ControlHandle, 'CFD', nil);
-    end;
+    {$IFDEF DEBUG_DARKMODE}
+    OutputDebugString(PChar('  ApplyDarkModeToControl: ' + AControl.ClassName + ' [' + AControl.Name + ']'));
+    {$ENDIF}
 
     // Apply colors based on control type
     if AControl is StdCtrls.TButton then
@@ -366,45 +251,69 @@ procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm)
       StdCtrls.TButton(AControl).Color := ColorSet.ButtonFaceColorDefault;
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TButton'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TEdit then
     begin
       StdCtrls.TEdit(AControl).Color := ColorSet.EditBackground;
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TEdit'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TMemo then
     begin
       StdCtrls.TMemo(AControl).Color := ColorSet.EditBackground;
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TMemo'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TListBox then
     begin
       StdCtrls.TListBox(AControl).Color := ColorSet.EditBackground;
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TListBox'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TComboBox then
     begin
       StdCtrls.TComboBox(AControl).Color := ColorSet.EditBackground;
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TComboBox'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TCheckBox then
     begin
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TCheckBox'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TRadioButton then
     begin
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TRadioButton'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TGroupBox then
     begin
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TGroupBox'));
+      {$ENDIF}
     end
     else if AControl is ExtCtrls.TPanel then
     begin
@@ -416,11 +325,17 @@ procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm)
 
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TPanel'));
+      {$ENDIF}
     end
     else if AControl is StdCtrls.TLabel then
     begin
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TLabel'));
+      {$ENDIF}
     end
     else if AControl is TCustomButtonPanel then
     begin
@@ -428,6 +343,9 @@ procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm)
       TCustomButtonPanel(AControl).Color := ColorSet.FormBackground;
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TButtonPanel'));
+      {$ENDIF}
     end
     else if AControl is TBitBtn then
     begin
@@ -435,12 +353,18 @@ procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm)
       TBitBtn(AControl).Color := ColorSet.ButtonFaceColorDefault;
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TBitBtn'));
+      {$ENDIF}
     end
     else if AControl is TGraphicControl then
     begin
       // Generic graphic controls (non-windowed) - just update font
       if shouldSetFont then
         AControl.Font.Color := ColorSet.FontColor;
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('    -> Themed TGraphicControl'));
+      {$ENDIF}
     end;
 
     // Recursively process child controls for windowed controls
@@ -454,32 +378,86 @@ procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm)
 var
   ldark: DWORD;
   dwmResult: HRESULT;
-  OriginalWndProc: ptruint;
 begin
+  {$IFDEF DEBUG_DARKMODE}
+  OutputDebugString(PChar('FormAddedEvent called for: ' + Form.ClassName + ' [' + Form.Name + ']'));
+  OutputDebugString(PChar('  Form.Handle = ' + IntToStr(Form.Handle)));
+  OutputDebugString(PChar('  Form.HandleAllocated = ' + BoolToStr(Form.HandleAllocated, True)));
+  OutputDebugString(PChar('  ShouldAppsUseDarkMode = ' + BoolToStr(ShouldAppsUseDarkMode, True)));
+  {$ENDIF}
+
   // Only theme if dark mode is enabled
   if not ShouldAppsUseDarkMode then
     Exit;
 
   // Ensure handle is created before calling DWM functions
   if not Form.HandleAllocated then
+  begin
+    {$IFDEF DEBUG_DARKMODE}
+    OutputDebugString(PChar('  WARNING: Handle not allocated, forcing creation...'));
+    {$ENDIF}
     Form.HandleNeeded;
+  end;
 
-  // **NEW**: Skip TNewForm descendants (already themed)
-  if Form is TNewForm then Exit;
+  {$IFDEF DEBUG_DARKMODE}
+  OutputDebugString(PChar('  After HandleNeeded, Handle = ' + IntToStr(Form.Handle)));
+  {$ENDIF}
 
-  // Apply dark mode to form handle
-  AllowDarkModeForWindow(Form.Handle, 1);
+  // Apply dark titlebar - both AllowDarkModeForWindow and DWM attributes needed
+  if AllowDarkModeForWindow(Form.Handle, 1) then
+  begin
+    {$IFDEF DEBUG_DARKMODE}
+    OutputDebugString(PChar('  AllowDarkModeForWindow succeeded'));
+    {$ENDIF}
+  end
+  else
+  begin
+    {$IFDEF DEBUG_DARKMODE}
+    OutputDebugString(PChar('  AllowDarkModeForWindow FAILED'));
+    {$ENDIF}
+  end;
 
-  // Dark titlebar (try both constants for compatibility)
+  // Set DWM titlebar attribute (required for actual titlebar darkening)
   if InitDwmLibrary then
   begin
+    {$IFDEF DEBUG_DARKMODE}
+    OutputDebugString(PChar('  InitDwmLibrary succeeded'));
+    {$ENDIF}
     ldark := 1;
+    // Try attribute 20 first (Windows 11), fallback to 19 (Windows 10)
     dwmResult := DwmSetWindowAttribute(Form.Handle, 20, @ldark, sizeof(ldark));
     if dwmResult <> S_OK then
-      DwmSetWindowAttribute(Form.Handle, 19, @ldark, sizeof(ldark));
+    begin
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('  DwmSetWindowAttribute(20) failed with code: ' + IntToHex(dwmResult, 8)));
+      OutputDebugString(PChar('  Trying attribute 19...'));
+      {$ENDIF}
+      dwmResult := DwmSetWindowAttribute(Form.Handle, 19, @ldark, sizeof(ldark));
+      {$IFDEF DEBUG_DARKMODE}
+      if dwmResult = S_OK then
+        OutputDebugString(PChar('  DwmSetWindowAttribute(19) succeeded'))
+      else
+        OutputDebugString(PChar('  DwmSetWindowAttribute(19) FAILED with code: ' + IntToHex(dwmResult, 8)));
+      {$ENDIF}
+    end
+    else
+    begin
+      {$IFDEF DEBUG_DARKMODE}
+      OutputDebugString(PChar('  DwmSetWindowAttribute(20) succeeded'));
+      {$ENDIF}
+    end;
+  end
+  else
+  begin
+    {$IFDEF DEBUG_DARKMODE}
+    OutputDebugString(PChar('  InitDwmLibrary FAILED'));
+    {$ENDIF}
   end;
 
   // Set form background and font
+  {$IFDEF DEBUG_DARKMODE}
+  OutputDebugString(PChar('  Setting form colors...'));
+  {$ENDIF}
   Form.Color := ColorSet.FormBackground;
   if (Form.Font.Color = clDefault) or
      (Form.Font.Color = graphics.clWindowText) or
@@ -487,15 +465,14 @@ begin
     Form.Font.Color := ColorSet.FontColor;
 
   // Recursively theme all controls on the form
+  {$IFDEF DEBUG_DARKMODE}
+  OutputDebugString(PChar('  Theming child controls...'));
+  {$ENDIF}
   ApplyDarkModeToControl(Form);
 
-  // **NEW**: Subclass window to handle WM_CTLCOLOR* messages
-  OriginalWndProc := SetWindowLongPtr(Form.Handle, GWLP_WNDPROC, UINT_PTR(@BCSubclassWndProc));
-  FThemedForms.Add(Pointer(Form.Handle));
-  FOriginalWndProcs.Add(Pointer(OriginalWndProc));
-
-  // Force repaint
-  InvalidateRect(Form.Handle, nil, True);
+  {$IFDEF DEBUG_DARKMODE}
+  OutputDebugString(PChar('FormAddedEvent completed for: ' + Form.ClassName));
+  {$ENDIF}
 end;
 
 procedure registerDarkModeHintHandler;
@@ -506,11 +483,10 @@ begin
 end;
 
 procedure registerDarkModeFormAddHandler;
+var hh: TBCFormEventHandler;
 begin
-  if GlobalFormEventHandler = nil then
-    GlobalFormEventHandler := TBCFormEventHandler.Create;
-
-  Screen.AddHandlerFormAdded(GlobalFormEventHandler.FormAddedEvent);
+  hh:=TBCFormEventHandler.Create;
+  screen.AddHandlerFormAdded(hh.FormAddedEvent);
 end;
 
 var
@@ -658,12 +634,6 @@ initialization
   except
 
   end;
-  {$endif}
-
-finalization
-  {$ifdef windows}
-  if GlobalFormEventHandler <> nil then
-    GlobalFormEventHandler.Free;
   {$endif}
 end.
 

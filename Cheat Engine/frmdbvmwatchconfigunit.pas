@@ -237,7 +237,7 @@ begin
   if btnok.enabled=false then
   begin
     lblPhysicalAddress.caption:='Physical Address=invalid';
-    lblPhysicalAddress.font.color:=clRed;
+    lblPhysicalAddress.font.color:=ColorSet.StatusError;
   end;
   {$endif}
 end;

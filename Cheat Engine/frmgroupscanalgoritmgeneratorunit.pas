@@ -459,7 +459,7 @@ begin
     lblMustBeDividable.font.color:=clWindowText
   end
   else
-    lblMustBeDividable.font.color:=clRed; //error
+    lblMustBeDividable.font.color:=ColorSet.ValidationError; //error
 end;
 
 procedure TfrmGroupScanAlgoritmGenerator.btnOKClick(Sender: TObject);

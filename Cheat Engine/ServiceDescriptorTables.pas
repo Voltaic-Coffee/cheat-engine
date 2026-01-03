@@ -9,7 +9,7 @@ uses
   windows, imagehlp,
   {$endif}LCLIntf, Messages, SysUtils, Classes, Graphics, Controls, Forms,
   Dialogs,CEFuncProc,NewKernelHandler, Menus, ComCtrls,symbolhandler,disassembler,
-  StdCtrls, LResources, commonTypeDefs;
+  StdCtrls, LResources, commonTypeDefs, betterControls;
 
 {$ifdef windows}
 type tenummodules= class(tthread)

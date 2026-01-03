@@ -260,7 +260,7 @@ begin
 
   if (dbvm_version>0) then
   begin
-    lblDBVM.Font.Color:=clLime;
+    lblDBVM.Font.Color:=ColorSet.Lime;
 
     memfree:=dbvm_getMemory(pages);
     dmemfree:=memfree;
@@ -276,7 +276,7 @@ begin
 
     if supportsdbvm then
     begin
-      lblDBVM.Font.Color:=clGreen;
+      lblDBVM.Font.Color:=ColorSet.Green;
       lbldbvm.caption:=rsYourSystemSupportsDBVM;
       lbldbvm.Hint:=rsThisMeansThatYouReCurrentlyNotRunningDbvm;
       lbldbvm.ShowHint:=true;
@@ -284,7 +284,7 @@ begin
     end
     else
     begin
-      lblDBVM.Font.Color:=clRed;
+      lblDBVM.Font.Color:=ColorSet.Red;
       lbldbvm.caption:=rsYourSystemDOESNOTSupportDBVM;
       lbldbvm.Hint:=rsThisMeansThatYouWillNeedANewCpuIntelToBeAbleToUseT;
       lbldbvm.ShowHint:=true;

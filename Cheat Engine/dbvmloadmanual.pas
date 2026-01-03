@@ -181,7 +181,7 @@ begin
     if dbvm_version>0 then
     begin
       cpulabels[i].caption:=rsLoaded+inttostr(dbvm_version and $ffffff);
-      cpulabels[i].font.color:=clGreen;
+      cpulabels[i].font.color:=ColorSet.Green;
       cpulabels[i].tag:=-1;
     end
     else
