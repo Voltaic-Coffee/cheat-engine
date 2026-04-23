@@ -33,7 +33,7 @@ begin
 
     if ShouldAppsUseDarkMode() then
     begin
-     // font.color:=colorset.FontColor;
+      font.color:=colorset.FontColor;
       Color:=colorset.TextBackground;
     end;
 

@@ -616,6 +616,7 @@ type TCEForm=class(TForm) //TCustomForm)
     function getActive: boolean;
 
     procedure SetMethodProperty(Reader: TReader; Instance: TPersistent; PropInfo: PPropInfo; const TheMethodName: string; var Handled: boolean);
+    procedure ApplyThemeColorsToSelf;
   protected
     procedure paint; override;
   public
@@ -1366,6 +1367,8 @@ begin
 
   RestoreToDesignState;
 
+  ApplyThemeColorsToSelf;
+
   active:=wasActive;
 end;
 
@@ -1409,6 +1412,20 @@ begin
   ms.Destroy;
 end;
 
+procedure TCEForm.ApplyThemeColorsToSelf;
+begin
+  if not ShouldAppsUseDarkMode then exit;
+  if color=clDefault then
+  begin
+    color:=clWindow;
+    font.color:=clWindowtext;
+  end;
+  //Recolor any child controls that were deserialized with clDefault.
+  //Conservative: ApplyThemeRecursive only touches clDefault, so hardcoded
+  //colors in specialist viewers (hex dump, asm view) are preserved.
+  ApplyThemeRecursive(self);
+end;
+
 procedure TCEForm.LoadFromStream(s: TStream);
 var
   formnode: TDOMNode;
@@ -1430,12 +1447,7 @@ begin
       raise exception.create(rsInvalidFormData);
   end;
 
-  if ShouldAppsUseDarkMode() then
-    if color=clDefault then
-    begin
-      color:=clWindow;
-      font.color:=clWindowtext;
-    end;
+  ApplyThemeColorsToSelf;
 end;
 
 procedure TCEForm.LoadFromFile(filename: string);
@@ -1466,12 +1478,7 @@ begin
 
   active:=wasActive;
 
-  if ShouldAppsUseDarkMode() then
-    if color=clDefault then
-    begin
-      color:=clWindow;
-      font.color:=clWindowtext;
-    end;
+  ApplyThemeColorsToSelf;
 end;
 
 procedure TCEForm.paint;

@@ -94,6 +94,8 @@ var
 
   procedure registerDarkModeHintHandler;
   procedure registerDarkModeFormAddHandler;
+  procedure SetWindowDarkTitlebar(h: HWND);
+  procedure ApplyThemeRecursive(c: TComponent);
   {$endif}
 
   {$ifdef darwin}
@@ -106,7 +108,7 @@ var
 implementation
 
 {$ifdef windows}
-uses forms, controls, Registry, Win32Proc{$ifndef skip_mainunit2}, mainunit2{$endif};
+uses forms, controls, Registry, Win32Proc, DwmApi{$ifndef skip_mainunit2}, mainunit2{$endif};
 
 {$ifdef skip_mainunit2}
 const strCheatEngine='Cheat Engine';
@@ -222,14 +224,15 @@ end;
 
 procedure TBCFormEventHandler.FormAddedEvent(Sender: TObject; Form: TCustomForm);
 begin
-  {if ShouldAppsUseDarkMode then
-  begin
-    form.color:=$242424;
-    if form.font.color=clDefault then
-      form.font.color:=colorset.FontColor;
-  end;  }
-
-  //todo
+  if not ShouldAppsUseDarkMode then exit;
+  if Form=nil then exit;
+  if Form.Color=clDefault then
+    Form.Color:=$242424;
+  if (not Form.ParentFont) and (Form.Font.Color=clDefault) then
+    Form.Font.Color:=ColorSet.FontColor;
+  if Form.HandleAllocated then
+    SetWindowDarkTitlebar(Form.Handle);
+  ApplyThemeRecursive(Form);
 end;
 
 procedure registerDarkModeHintHandler;
@@ -244,6 +247,41 @@ var hh: TBCFormEventHandler;
 begin
   hh:=TBCFormEventHandler.Create;
   screen.AddHandlerFormAdded(hh.FormAddedEvent);
+end;
+
+procedure SetWindowDarkTitlebar(h: HWND);
+var ldark: DWORD;
+begin
+  if not ShouldAppsUseDarkMode then exit;
+  if h=0 then exit;
+  if not InitDwmLibrary then exit;
+  ldark:=1;
+  //DWMWA_USE_IMMERSIVE_DARK_MODE: 20 is the official value (Win10 2004+);
+  //19 is the pre-release fallback (Win10 1809..1909).
+  if DwmSetWindowAttribute(h, 20, @ldark, sizeof(ldark)) <> S_OK then
+    DwmSetWindowAttribute(h, 19, @ldark, sizeof(ldark));
+end;
+
+procedure ApplyThemeRecursive(c: TComponent);
+var
+  i: integer;
+  ctl: TControl;
+begin
+  if c=nil then exit;
+  if not ShouldAppsUseDarkMode then exit;
+
+  if c is TControl then
+  begin
+    ctl:=TControl(c);
+    //Only substitute clDefault - respect authored colors (hex viewer, asm view, etc.)
+    if ctl.Color=clDefault then
+      ctl.Color:=ColorSet.TextBackground;
+    if (not ctl.ParentFont) and (ctl.Font.Color=clDefault) then
+      ctl.Font.Color:=ColorSet.FontColor;
+  end;
+
+  for i:=0 to c.ComponentCount-1 do
+    ApplyThemeRecursive(c.Components[i]);
 end;
 
 var
@@ -327,8 +365,8 @@ initialization
 
         if ShouldAppsUseDarkMode() then
         begin
-          ColorSet.CheckboxFillColor:=$e8e8e8;
-          ColorSet.InactiveCheckboxFillColor:=$999999;
+          ColorSet.CheckboxFillColor:=inccolor(ColorSet.TextBackground, 24);
+          ColorSet.InactiveCheckboxFillColor:=inccolor(ColorSet.TextBackground, 12);
           clBtnFace:=inccolor(ColorSet.TextBackground,8);
           clBtnText:=ColorSet.FontColor;
 

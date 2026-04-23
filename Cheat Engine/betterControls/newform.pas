@@ -22,10 +22,9 @@ type
 
 implementation
 
-uses graphics, Menus, Win32WSMenus, betterControls, DwmApi;
+uses graphics, Menus, Win32WSMenus, betterControls;
 
 constructor TNewForm.Create(TheOwner: TComponent);
-var ldark: dword;
 begin
   inherited create(TheOwner);
 
@@ -33,22 +32,15 @@ begin
   begin
     AllowDarkModeForWindow(handle,1);
 
-
     color:=$242424;
     if font.color=clDefault then
       font.color:=colorset.FontColor;
 
-
-    if InitDwmLibrary then
-    begin
-      ldark:=1;
-      DwmSetWindowAttribute(handle, 19, @Ldark, sizeof(Ldark));
-    end;
+    SetWindowDarkTitlebar(handle);
   end;
 end;
 
 constructor TNewForm.CreateNew(AOwner: TComponent; Num: Integer=0);
-var ldark: dword;
 begin
   inherited CreateNew(AOwner, num);
   if ShouldAppsUseDarkMode() then
@@ -56,13 +48,10 @@ begin
     AllowDarkModeForWindow(handle,1);
 
     color:=$242424;
-    font.color:=colorset.FontColor;
-    if InitDwmLibrary then
-    begin
-      ldark:=1;
+    if font.color=clDefault then
+      font.color:=colorset.FontColor;
 
-      DwmSetWindowAttribute(handle, 20, @Ldark, sizeof(Ldark));
-    end;
+    SetWindowDarkTitlebar(handle);
   end;
 end;
 

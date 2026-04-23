@@ -33,7 +33,7 @@ begin
     AllowDarkModeForWindow(handle,1);
     SetWindowTheme(Handle, 'explorer', nil);
 
-    //font.color:=colorset.FontColor;
+    font.color:=colorset.FontColor;
     Color:=colorset.TextBackground;
   end;
 end;

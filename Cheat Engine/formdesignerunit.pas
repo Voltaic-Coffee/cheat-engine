@@ -1224,7 +1224,6 @@ var x: array of integer;
   reg: Tregistry;
   i: integer;
   dpmi: tmenuitem;
-  ldark: dword;
 
   ip: TObjectInspectorPage;
   wc: TWinControl;
@@ -1255,11 +1254,7 @@ begin
         if font.color=clDefault then
           font.color:=colorset.FontColor;
 
-        if InitDwmLibrary then
-        begin
-          ldark:=1;
-          DwmSetWindowAttribute(handle, 19, @Ldark, sizeof(Ldark));
-        end;
+        SetWindowDarkTitlebar(handle);
 
 
 

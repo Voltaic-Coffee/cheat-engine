@@ -32,7 +32,7 @@ begin
       AllowDarkModeForWindow(handle, 1);
       SetWindowTheme(handle, 'CFD', nil);
 
-      //font.color:=ColorSet.FontColor;
+      font.color:=ColorSet.FontColor;
       color:=ColorSet.TextBackground;
     end;
 
